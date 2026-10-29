@@ -1,0 +1,4 @@
+build/
+dist/
+# The sideload signing key: keep this file (a new key means uninstalling the app on the phone), but never commit it.
+keystore/

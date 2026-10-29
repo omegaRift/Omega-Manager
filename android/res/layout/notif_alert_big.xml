@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Expanded alert: the whole message on red. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/notif_bg"
+    android:padding="14dp">
+    <TextView android:id="@+id/n_kind" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textColor="#FFFFE1DE" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.08" />
+    <TextView android:id="@+id/n_title" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="4dp" android:textColor="#FFFFFFFF" android:textSize="18sp" android:textStyle="bold" android:maxLines="2" android:ellipsize="end" />
+    <TextView android:id="@+id/n_msg" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="2dp" android:textColor="#FFFFFFFF" android:textSize="15sp" android:maxLines="7" android:ellipsize="end" />
+    <TextView android:id="@+id/n_late" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="4dp" android:textColor="#FFFFE1DE" android:textSize="12sp" />
+</LinearLayout>

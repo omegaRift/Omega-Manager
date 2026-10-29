@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>Omega Manager</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><img class="logo" src="../Omega.png" alt="" aria-hidden="true"><span>Omega Manager</span></div>
+  <nav class="modes" role="tablist" aria-label="Sections">
+    <button class="mode on" role="tab" data-mode="auto" data-icon="pointer" aria-selected="true">Automations</button>
+    <button class="mode" role="tab" data-mode="timers" data-icon="bell" aria-selected="false">My timers <span class="mcount" id="modeTimersCount"></span></button>
+  </nav>
+  <div class="status" id="status"></div>
+  <div class="top-actions">
+    <span class="hotkey" id="hotkeyHint" title="Works from any app, even when this window is hidden"></span>
+    <button class="btn ghost" id="pauseBtn"></button>
+    <button class="btn icon-only ghost" id="themeBtn" title="Night mode" aria-label="Night mode"></button>
+    <button class="btn icon-only ghost" id="settingsBtn" title="Settings" aria-label="Settings" data-icon="settings"></button>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- Tasks -->
+  <aside class="tasks-pane">
+    <div class="pane-head">
+      <h2>Tasks</h2>
+      <button class="btn primary sm" id="newTaskBtn" data-icon="plus">New task</button>
+    </div>
+    <ul class="task-list" id="taskList"></ul>
+  </aside>
+
+  <!-- Viewport -->
+  <section class="view-pane">
+    <div class="view-toolbar" id="viewToolbar">
+      <button class="viewport-chip" id="viewportChip" title="Choose which screen or window this task works on"></button>
+      <div class="tools" role="toolbar" aria-label="Add a step by clicking the viewport">
+        <button class="tool" data-tool="select" data-icon="pointer" title="Select and move steps (V)">Select</button>
+        <button class="tool" data-tool="click" data-icon="click" title="Add a click (C)">Click</button>
+        <button class="tool" data-tool="double" data-icon="double" title="Add a double-click (D)">Double</button>
+        <button class="tool" data-tool="right" data-icon="right" title="Add a right-click (R)">Right</button>
+        <button class="tool" data-tool="type" data-icon="type" title="Add typing at a spot (T)">Type</button>
+        <button class="tool" data-tool="scroll" data-icon="scroll" title="Add scrolling at a spot (S)">Scroll</button>
+      </div>
+      <div class="find-group">
+        <button class="btn accent" id="findBtn" data-icon="sparkle" title="Ask the local AI to find text boxes and other inputs">Find inputs</button>
+        <select id="findMethod" title="How to find inputs" aria-label="How to find inputs">
+          <option value="ai">with AI</option>
+          <option value="uia">with Windows accessibility</option>
+        </select>
+      </div>
+      <label class="switch-label" title="Show the inputs that were found"><input type="checkbox" id="showFound" checked> Found</label>
+      <button class="btn ghost sm" id="freezeBtn" data-icon="pause" title="Freeze the preview">Freeze</button>
+    </div>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage" id="stage" hidden>
+        <video id="video" muted playsinline></video>
+        <img id="still" alt="" hidden>
+        <div class="overlay" id="overlay"></div>
+      </div>
+      <div class="stage-empty" id="stageEmpty"></div>
+      <div class="busy" id="busy" hidden>
+        <div class="busy-label" id="busyLabel"></div>
+        <div class="progress"><div class="bar" id="busyBar"></div></div>
+        <button class="btn sm" id="busyCancel">Cancel</button>
+      </div>
+      <div class="popover" id="popover" hidden></div>
+      <div class="countdown" id="countdown" hidden></div>
+    </div>
+    <div class="view-foot" id="viewFoot"></div>
+  </section>
+
+  <!-- Editor -->
+  <aside class="edit-pane" id="editPane">
+    <div class="editor-empty" id="editorEmpty">Pick a task on the left, or make a new one.</div>
+    <div class="editor" id="editor" hidden>
+      <div class="task-head">
+        <input class="task-name" id="taskName" aria-label="Task name" spellcheck="false">
+        <div class="run-row">
+          <button class="btn primary" id="runBtn" data-icon="play" title="Run the steps now, for real (3 second countdown)">Run now</button>
+          <button class="btn" id="rehearseBtn" data-icon="eye" title="Show where each step would go, without clicking or typing">Rehearse</button>
+          <button class="btn icon-only ghost danger" id="deleteTaskBtn" data-icon="trash" title="Delete this task" aria-label="Delete this task"></button>
+        </div>
+        <div class="task-opts">
+          <label>Repeat <input type="number" id="taskRepeat" min="1" max="10000" class="num"> time(s) per run</label>
+          <label id="focusOpt"><input type="checkbox" id="taskFocus"> Bring the window to the front first</label>
+          <span id="reopenOpt" class="reopen-opt"><label><input type="checkbox" id="taskReopen"> Open the window if it is closed</label><button class="btn sm ghost" type="button" id="launchBtn" data-icon="settings" title="Which program opens this window, and how">How to open it…</button></span>
+        </div>
+      </div>
+      <nav class="tabs" role="tablist">
+        <button role="tab" class="tab" data-tab="steps">Steps <span class="count" id="stepCount"></span></button>
+        <button role="tab" class="tab" data-tab="timers">Timers <span class="count" id="timerCount"></span></button>
+        <button role="tab" class="tab" data-tab="history">History</button>
+      </nav>
+      <div class="tab-body" data-body="steps">
+        <ol class="steps" id="steps"></ol>
+        <div class="add-row">
+          <span class="muted">Add without a spot:</span>
+          <button class="btn sm" data-add="key" data-icon="key">Key press</button>
+          <button class="btn sm" data-add="type" data-icon="type">Type</button>
+          <button class="btn sm" data-add="wait" data-icon="clock">Wait</button>
+        </div>
+        <div class="add-row">
+          <span class="muted">Logic:</span>
+          <button class="btn sm logic" data-addlogic="group" data-icon="group" title="A named box of steps you can fold away or skip together">Group</button>
+          <button class="btn sm logic" data-addlogic="if" data-icon="branch" title="Run some steps only when something is true, others when it is not">If / Else</button>
+          <button class="btn sm logic" data-addlogic="loop" data-icon="repeat" title="Repeat steps a number of times, or while/until something is true">Loop</button>
+          <button class="btn sm logic" data-addlogic="stop" data-icon="stop" title="Leave the loop, or end the task (put it inside an If)">Stop</button>
+        </div>
+        <p class="hint">Pick a tool above the viewport and click where the step should happen. New steps go after the selected step, or inside a selected Group, If or Loop. Drag cards by their <span class="grip-inline" data-icon="grip"></span> handle to move them in or out; drag a numbered pin to move its spot.</p>
+      </div>
+      <div class="tab-body" data-body="timers" hidden>
+        <ul class="timers" id="timers"></ul>
+        <div class="add-row">
+          <span class="muted">Add a timer:</span>
+          <button class="btn sm" data-addtimer="interval" data-icon="repeat">Every…</button>
+          <button class="btn sm" data-addtimer="daily" data-icon="calendar">Daily at…</button>
+          <button class="btn sm" data-addtimer="once" data-icon="clock">Once at…</button>
+        </div>
+        <label class="row-check"><input type="checkbox" id="taskEnabled"> Timers on for this task</label>
+        <p class="hint">Timers run while Omega Manager is open, including from the tray. One task runs at a time; others wait their turn.</p>
+      </div>
+      <div class="tab-body" data-body="history" hidden>
+        <ul class="history" id="history"></ul>
+        <button class="btn sm ghost" id="clearHistory">Clear history</button>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- My timers: personal countdowns and alarms with a red notification -->
+<main class="timers-page" id="timersPage" hidden>
+  <section class="tm-new" aria-labelledby="tmNewTitle">
+    <h2 id="tmNewTitle">New timer</h2>
+    <div class="seg" id="tmKind" role="tablist">
+      <button type="button" data-kind="countdown" class="on" data-icon="hourglass">Countdown</button>
+      <button type="button" data-kind="alarm" data-icon="clock">At a time</button>
+    </div>
+    <div id="tmCountdownBox">
+      <div class="tm-dur">
+        <label><input type="number" id="tmH" min="0" max="99" value="0" aria-label="Hours"><span>hours</span></label>
+        <label><input type="number" id="tmM" min="0" max="59" value="5" aria-label="Minutes"><span>minutes</span></label>
+        <label><input type="number" id="tmS" min="0" max="59" value="0" aria-label="Seconds"><span>seconds</span></label>
+      </div>
+      <div class="chips" id="tmQuick">
+        <button type="button" class="chip" data-quick="60">1 min</button>
+        <button type="button" class="chip" data-quick="300">5 min</button>
+        <button type="button" class="chip" data-quick="600">10 min</button>
+        <button type="button" class="chip" data-quick="900">15 min</button>
+        <button type="button" class="chip" data-quick="1800">30 min</button>
+        <button type="button" class="chip" data-quick="3600">1 hour</button>
+      </div>
+    </div>
+    <div id="tmAlarmBox" hidden>
+      <label class="tm-field">Time of day <input type="time" id="tmTime"></label>
+      <label class="row-check"><input type="checkbox" id="tmDaily"> Every day</label>
+    </div>
+    <p class="tm-note" id="tmNote"></p>
+    <label class="tm-field">Name <input id="tmLabel" maxlength="80" placeholder="e.g. Tea, Meeting, Laundry" spellcheck="false"></label>
+    <label class="tm-field red">Notification message
+      <textarea id="tmMessage" maxlength="500" rows="3" placeholder="What the red notification will say when time is up"></textarea></label>
+    <label class="row-check"><input type="checkbox" id="tmSound" checked> Play a sound</label>
+    <div class="tm-buttons">
+      <button type="button" class="btn" id="tmPreview" data-icon="eye" title="Show the red notification now, with this message">Preview notification</button>
+      <button type="button" class="btn primary" id="tmStart" data-icon="play" title="Start (Ctrl+Enter in the message)">Start timer</button>
+    </div>
+  </section>
+  <section class="tm-lists">
+    <div class="tm-head"><h2>Running <span class="mcount" id="tmRunCount"></span></h2>
+      <button type="button" class="btn sm" id="tmPhoneBtn" data-icon="phone" title="Get these alerts on your Android phone, over Tailscale">Phone alerts <span class="phone-dot" id="tmPhoneDot" hidden></span></button></div>
+    <div class="tm-grid" id="tmRunning"></div>
+    <div class="tm-head" id="tmDoneHead" hidden><h2>Finished</h2><button type="button" class="btn sm ghost" id="tmClearDone" data-icon="trash">Clear finished</button></div>
+    <div class="tm-grid" id="tmDone"></div>
+  </section>
+</main>
+
+<!-- Viewport picker -->
+<dialog id="pickerDlg" class="dlg wide">
+  <form method="dialog" class="dlg-inner">
+    <div class="dlg-head"><h2>Choose a viewport</h2><button class="btn icon-only ghost" value="cancel" data-icon="x" aria-label="Close"></button></div>
+    <p class="muted">Steps are placed relative to this screen or window, so they still land right if the window moves.</p>
+    <input type="search" id="pickerFilter" placeholder="Filter windows…" class="filter">
+    <h3>Screens</h3>
+    <div class="source-grid" id="screenGrid"></div>
+    <h3>Windows</h3>
+    <div class="source-grid" id="windowGrid"></div>
+  </form>
+</dialog>
+
+<!-- Settings -->
+<dialog id="settingsDlg" class="dlg">
+  <form method="dialog" class="dlg-inner">
+    <div class="dlg-head"><h2>Settings</h2><button class="btn icon-only ghost" value="cancel" data-icon="x" aria-label="Close"></button></div>
+    <div class="form-grid">
+      <label for="setHost">Ollama address</label><input id="setHost" spellcheck="false">
+      <label for="setModel">Vision model</label><div class="inline"><select id="setModel"></select><span class="muted" id="modelNote"></span></div>
+      <label for="setTypeDelay">Typing speed</label><div class="inline"><input type="number" id="setTypeDelay" min="0" max="500" class="num"> ms between keys</div>
+      <label for="setTheme">Look</label><select id="setTheme"><option value="system">Follow Windows</option><option value="light">Day</option><option value="dark">Night</option></select>
+    </div>
+    <label class="row-check"><input type="checkbox" id="setFailsafe"> Stop a run when I move the mouse (safety stop)</label>
+    <label class="row-check"><input type="checkbox" id="setNotify"> Notify me when a timer starts a task</label>
+    <label class="row-check"><input type="checkbox" id="setTray"> Keep running in the tray when the window is closed</label>
+  </form>
+</dialog>
+
+<dialog id="launchDlg" class="dlg">
+  <form method="dialog" class="dlg-inner">
+    <div class="dlg-head"><h2>How to open this window</h2><button class="btn icon-only ghost" value="cancel" data-icon="x" aria-label="Close"></button></div>
+    <p class="muted">When the window is closed, Omega Manager starts this program and waits for its window. It was filled in from the window when you chose it; change it if the window comes from somewhere else.</p>
+    <div class="form-grid">
+      <label for="lPath">Program</label><div class="inline"><input id="lPath" spellcheck="false" placeholder="C:\Program Files\…\app.exe"><button class="btn" type="button" id="lBrowse">Browse…</button></div>
+      <label for="lArgs">Arguments</label><input id="lArgs" spellcheck="false" placeholder="Optional, e.g. the file it should open">
+      <label for="lAumid">Windows app id</label><input id="lAumid" spellcheck="false" placeholder="Store apps only; used instead of the program">
+      <label for="lSettle">Wait after it opens</label><div class="inline"><input type="number" id="lSettle" min="0" max="120" class="num"> seconds, so it can finish loading</div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn" type="button" id="lOpenNow" data-icon="play">Save and open it now</button>
+      <button class="btn primary" value="ok" id="lSave">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="phoneDlg" class="dlg">
+  <form method="dialog" class="dlg-inner">
+    <div class="dlg-head"><h2>Alerts on your phone</h2><button class="btn icon-only ghost" value="cancel" data-icon="x" aria-label="Close"></button></div>
+    <p class="muted">The Omega Manager Android app shows your timer alerts as red notifications, with Dismiss and Snooze. It connects to this PC only over your Tailscale network.</p>
+    <div class="phone-serve" id="phServe"></div>
+    <ol class="phone-steps">
+      <li>On the phone, open the <b>Tailscale</b> app and make sure it is connected.</li>
+      <li>On the phone, open <span class="ph-url"><b id="phUrl">…</b><button type="button" class="btn sm ghost" id="phCopy" data-icon="copy" title="Copy the address">Copy</button></span> in the browser and install the app.</li>
+      <li>Open the app and type this code:
+        <div class="pair-box" id="phPair"></div></li>
+    </ol>
+    <h3>Paired phones</h3>
+    <ul class="phone-list" id="phList"></ul>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" hidden></div>
+<script src="icons.js"></script>
+<script src="step-tree.js"></script>
+<script src="timers.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

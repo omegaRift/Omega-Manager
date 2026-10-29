@@ -1,0 +1,29 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fixture form</title>
+<style>
+  body { font: 15px Segoe UI, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+  header { background: #2b4c7e; color: #fff; padding: 14px 24px; font-size: 20px; }
+  main { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding: 28px 40px; }
+  label { display: block; font-weight: 600; margin-bottom: 6px; }
+  input, textarea, select { font: inherit; padding: 8px 10px; border: 1px solid #9aa5b1; border-radius: 4px; background: #fff; width: 280px; }
+  textarea { height: 90px; }
+  .row { margin-bottom: 22px; }
+  button { font: inherit; padding: 9px 22px; border: 0; border-radius: 4px; background: #2b7e4c; color: #fff; }
+  .search { position: absolute; right: 30px; top: 9px; width: 220px; }
+</style></head>
+<body>
+<header>Order desk <input class="search" id="search" placeholder="Search orders"></header>
+<main>
+  <section>
+    <div class="row"><label for="name">Customer name</label><input id="name"></div>
+    <div class="row"><label for="email">Email</label><input id="email" placeholder="you@example.com"></div>
+    <div class="row"><label for="qty">Quantity</label><input id="qty" type="number" value="1"></div>
+  </section>
+  <section>
+    <div class="row"><label for="ship">Shipping</label><select id="ship"><option>Standard</option><option>Express</option></select></div>
+    <div class="row"><label for="notes">Notes</label><textarea id="notes"></textarea></div>
+    <div class="row"><label><input type="checkbox" id="gift" style="width:auto"> Gift wrap</label></div>
+    <button id="submit">Place order</button>
+  </section>
+</main>
+</body></html>

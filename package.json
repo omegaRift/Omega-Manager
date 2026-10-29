@@ -1,0 +1,19 @@
+{
+  "name": "screen-autopilot",
+  "productName": "Omega Manager",
+  "version": "0.2.0",
+  "description": "Omega Manager: personal timers with red alerts, plus click, scroll and typing automation on a screen or window (local LLM finds text boxes), run on timers.",
+  "main": "main.js",
+  "type": "module",
+  "private": true,
+  "author": "Arnold",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js",
+    "smoke": "node test/smoke.js",
+    "android": "node android/build.mjs"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5"
+  }
+}
